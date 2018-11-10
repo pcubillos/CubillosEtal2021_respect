@@ -12,6 +12,9 @@ code/filter_info.txt
 *.bz2
 *.tli
 *.atm
+*.pck
+*.png
+*.npz
 inputs/opacity/*
 !inputs/opacity/wget*
 

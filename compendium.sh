@@ -6,10 +6,11 @@ cd $topdir
 git clone --recursive https://github.com/pcubillos/pyratbay
 cd $topdir/pyratbay
 git checkout 36c7d1f # Update when necessary
-make
 cd $topdir/modules/MCcubed
 git checkout ca0fb5d
-
+# Compile:
+cd $topdir/pyratbay
+make
 
 cd $topdir
 git clone https://github.com/pcubillos/repack
@@ -18,17 +19,13 @@ git checkout 4ba3633
 make
 
 
-## Temporary hack:
-#cd $topdir/pyratbay/modules
-#mv TEA jb_TEA
-#git clone https://github.com/pcubillos/TEA
-#cd TEA
-#git checkout multiproc
-
-
 # Generate filter files:
-#cd $topdir/code
-#$topdir/code/make_filters.py > $topdir/code/filter_info.txt
+cd $topdir/code
+$topdir/code/make_filters.py
+
+# Download Stellar model:
+cd $topdir/inputs
+wget http://kurucz.harvard.edu/grids/gridp00aodfnew/fp00ak2odfnew.pck
 
 
 # Download Exomol data:
@@ -74,11 +71,11 @@ python $topdir/pyratbay/pbay.py -c tli_exomol_CH4.cfg
 
 # Make atmospheric files:
 cd $topdir/run01/
-python $topdir/pyratbay/pbay.py -c atm_tea.cfg
+python $topdir/pyratbay/pbay.py -c atm_uniform.cfg
 
 # Make nominal opacity file (H2O CO CO2 CH4 HCN NH3):
 cd $topdir/run01/
-python $topdir/pyratbay/pbay.py -c opacity_nominal_4.8-14um.cfg
+python $topdir/pyratbay/pbay.py -c opacity_H2O-CO-CH4_1.0-5.5um.cfg
 
 # Run retrieval:
 cd $topdir/run02_clear/
