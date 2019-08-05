@@ -5,18 +5,15 @@ topdir=`pwd`
 cd $topdir
 git clone --recursive https://github.com/pcubillos/pyratbay
 cd $topdir/pyratbay
-git checkout 36c7d1f # Update when necessary
+git checkout 9dc2bd8
 cd $topdir/modules/MCcubed
-git checkout ca0fb5d
+git checkout 9819e4a
 # Compile:
 cd $topdir/pyratbay
 make
 
-cd $topdir
-git clone https://github.com/pcubillos/repack
-cd $topdir/repack
-git checkout 4ba3633
-make
+# Install repack:
+pip install lbl-repack==1.3.0
 
 
 # Generate filter files:
@@ -31,41 +28,37 @@ wget http://kurucz.harvard.edu/grids/gridp00aodfnew/fp00ak2odfnew.pck
 # Download Exomol data:
 cd $topdir/inputs/opacity
 wget -i wget_exomol_CH4.txt
-
-# Download HITEMP data:
-cd $topdir/inputs/opacity
-wget --user=HITRAN --password=getdata -N -i wget_hitemp_H2O.txt
-unzip '*.zip'
-rm -f *.zip
+wget -i wget_exomol_H2O.txt
 
 # Download CO data:
 cd $topdir/inputs/opacity
 wget http://iopscience.iop.org/0067-0049/216/1/15/suppdata/apjs504015_data.tar.gz
 tar -xvzf apjs504015_data.tar.gz
 rm -f apjs504015_data.tar.gz ReadMe Table_S1.txt Table_S2.txt \
-      Table_S3.txt Table_S6.par
+      Table_S3.txt Table_S3.txt Table_S6.par
 
 
 # Generate partition-function files for H2O:
 cd $topdir/run01
-python $topdir/code/pf_tips_H2O.py
+python $topdir/pyratbay/pbay.py -pf exomol \
+    $topdir/inputs/opacity/1H2-16O__POKAZATEL.pf
 
 # Generate partition-function file for CH4:
 cd $topdir/run01
-python $topdir/pyratbay/scripts/PFformat_Exomol.py \
+python $topdir/pyratbay/pbay.py -pf exomol \
        $topdir/inputs/opacity/12C-1H4__YT10to10.pf
 
 
-# Compress LBL databases:
+# Compress LBL databases:  # TBD
 cd $topdir/run01
 python $topdir/repack/repack.py repack_H2O.cfg
-python $topdir/repack/repack.py repack_CH4.cfg  # TBD
+python $topdir/repack/repack.py repack_CH4.cfg
 
 
-# Make TLI files:
+# Make TLI files:  ## OK
 cd $topdir/run01/
 python $topdir/pyratbay/pbay.py -c tli_Li_CO.cfg
-python $topdir/pyratbay/pbay.py -c tli_hitemp_H2O.cfg
+python $topdir/pyratbay/pbay.py -c tli_exomol_H2O.cfg
 python $topdir/pyratbay/pbay.py -c tli_exomol_CH4.cfg
 
 
@@ -73,9 +66,11 @@ python $topdir/pyratbay/pbay.py -c tli_exomol_CH4.cfg
 cd $topdir/run01/
 python $topdir/pyratbay/pbay.py -c atm_uniform.cfg
 
-# Make nominal opacity file (H2O CO CO2 CH4 HCN NH3):
+# Make opacity files:
 cd $topdir/run01/
-python $topdir/pyratbay/pbay.py -c opacity_H2O-CO-CH4_1.0-5.5um.cfg
+python $topdir/pyratbay/pbay.py -c opacity_H2O_1.0-5.5um.cfg
+python $topdir/pyratbay/pbay.py -c opacity_CH4_1.0-5.5um.cfg
+python $topdir/pyratbay/pbay.py -c opacity_CO_1.0-5.5um.cfg
 
 # Run retrieval:
 cd $topdir/run02_clear/
