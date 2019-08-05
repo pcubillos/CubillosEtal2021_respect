@@ -69,7 +69,7 @@ def main():
             filters += "         {:s}\n".format(ffile)
             k += 1
 
-        filters = filters.replace("        ", "filter =", 1)
+        filters = filters.replace("        ", "filters =", 1)
         print(fdata[j])
         print(planet)
         print(data)

@@ -6,7 +6,7 @@ cd $topdir
 git clone --recursive https://github.com/pcubillos/pyratbay
 cd $topdir/pyratbay
 git checkout 9dc2bd8
-cd $topdir/modules/MCcubed
+cd $topdir/pyratbay/modules/MCcubed
 git checkout 9819e4a
 # Compile:
 cd $topdir/pyratbay
@@ -73,5 +73,8 @@ python $topdir/pyratbay/pbay.py -c opacity_CH4_1.0-5.5um.cfg
 python $topdir/pyratbay/pbay.py -c opacity_CO_1.0-5.5um.cfg
 
 # Run retrieval:
-cd $topdir/run02_clear/
-python $topdir/pyratbay/pbay.py -c mcmc_wasp43b_lon+000_w0-cdm00-c.cfg
+cd $topdir/run02_resolved/
+python $topdir/pyratbay/pbay.py -c mcmc_WASP43b_day_resolved.cfg
+python $topdir/pyratbay/pbay.py -c mcmc_WASP43b_east_resolved.cfg
+python $topdir/pyratbay/pbay.py -c mcmc_WASP43b_west_resolved.cfg
+
