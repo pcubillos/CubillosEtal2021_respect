@@ -78,3 +78,8 @@ python $topdir/pyratbay/pbay.py -c mcmc_WASP43b_day_resolved.cfg
 python $topdir/pyratbay/pbay.py -c mcmc_WASP43b_east_resolved.cfg
 python $topdir/pyratbay/pbay.py -c mcmc_WASP43b_west_resolved.cfg
 
+cd $topdir/run03_integrated/
+python $topdir/pyratbay/pbay.py -c mcmc_WASP43b_day_integrated.cfg
+python $topdir/pyratbay/pbay.py -c mcmc_WASP43b_east_integrated.cfg
+python $topdir/pyratbay/pbay.py -c mcmc_WASP43b_west_integrated.cfg
+
