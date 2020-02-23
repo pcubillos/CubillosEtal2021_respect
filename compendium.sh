@@ -1,19 +1,18 @@
 # Define topdir (in your top working directory) to make your life easier:
 topdir=`pwd`
 
+# Installs:
+pip install lbl-repack==1.3.0
+pip install mc3==3.0.0
+cd $topdir
+git clone https://github.com/pcubillos/rate
+
 # Clone (download) the necessary code:
 cd $topdir
 git clone --recursive https://github.com/pcubillos/pyratbay
 cd $topdir/pyratbay
-git checkout 9dc2bd8
-cd $topdir/pyratbay/modules/MCcubed
-git checkout 9819e4a
-# Compile:
-cd $topdir/pyratbay
-make
-
-# Install repack:
-pip install lbl-repack==1.3.0
+git checkout 4d6a388
+python setup.py develop
 
 
 # Generate filter files:
@@ -35,51 +34,51 @@ cd $topdir/inputs/opacity
 wget http://iopscience.iop.org/0067-0049/216/1/15/suppdata/apjs504015_data.tar.gz
 tar -xvzf apjs504015_data.tar.gz
 rm -f apjs504015_data.tar.gz ReadMe Table_S1.txt Table_S2.txt \
-      Table_S3.txt Table_S3.txt Table_S6.par
+      Table_S3.txt Table_S4.txt Table_S6.par
 
 
 # Generate partition-function files for H2O:
 cd $topdir/run01
-python $topdir/pyratbay/pbay.py -pf exomol \
-    $topdir/inputs/opacity/1H2-16O__POKAZATEL.pf
+pbay -pf exomol $topdir/inputs/opacity/1H2-16O__POKAZATEL.pf
 
 # Generate partition-function file for CH4:
 cd $topdir/run01
-python $topdir/pyratbay/pbay.py -pf exomol \
-       $topdir/inputs/opacity/12C-1H4__YT10to10.pf
+pbay -pf exomol $topdir/inputs/opacity/12C-1H4__YT10to10.pf
 
 
-# Compress LBL databases:  # TBD
+# Compress LBL databases:
 cd $topdir/run01
-python $topdir/repack/repack.py repack_H2O.cfg
-python $topdir/repack/repack.py repack_CH4.cfg
+repack repack_H2O.cfg
+repack repack_CH4.cfg  # TBD
 
 
-# Make TLI files:  ## OK
+# Make TLI files:
 cd $topdir/run01/
-python $topdir/pyratbay/pbay.py -c tli_Li_CO.cfg
-python $topdir/pyratbay/pbay.py -c tli_exomol_H2O.cfg
-python $topdir/pyratbay/pbay.py -c tli_exomol_CH4.cfg
+pbay -c tli_Li_CO.cfg
+pbay -c tli_hitemp_CO2.cfg
+pbay -c tli_exomol_H2O.cfg  # TBD
+pbay -c tli_exomol_CH4.cfg  # TBD
 
 
 # Make atmospheric files:
 cd $topdir/run01/
-python $topdir/pyratbay/pbay.py -c atm_uniform.cfg
+pbay -c atm_uniform.cfg
+pbay -c atm_equilibrium.cfg
 
 # Make opacity files:
 cd $topdir/run01/
-python $topdir/pyratbay/pbay.py -c opacity_H2O_1.0-5.5um.cfg
-python $topdir/pyratbay/pbay.py -c opacity_CH4_1.0-5.5um.cfg
-python $topdir/pyratbay/pbay.py -c opacity_CO_1.0-5.5um.cfg
+pbay -c opacity_H2O_1.0-5.5um.cfg  # TBD
+pbay -c opacity_CH4_1.0-5.5um.cfg  # TBD
+pbay -c opacity_CO_1.0-5.5um.cfg   # TBD
 
 # Run retrieval:
 cd $topdir/run02_resolved/
-python $topdir/pyratbay/pbay.py -c mcmc_WASP43b_day_resolved.cfg
-python $topdir/pyratbay/pbay.py -c mcmc_WASP43b_east_resolved.cfg
-python $topdir/pyratbay/pbay.py -c mcmc_WASP43b_west_resolved.cfg
+pbay -c mcmc_WASP43b_day_resolved.cfg
+pbay -c mcmc_WASP43b_east_resolved.cfg
+pbay -c mcmc_WASP43b_west_resolved.cfg
 
 cd $topdir/run03_integrated/
-python $topdir/pyratbay/pbay.py -c mcmc_WASP43b_day_integrated.cfg
-python $topdir/pyratbay/pbay.py -c mcmc_WASP43b_east_integrated.cfg
-python $topdir/pyratbay/pbay.py -c mcmc_WASP43b_west_integrated.cfg
+pbay -c mcmc_WASP43b_day_integrated.cfg   # TBD
+pbay -c mcmc_WASP43b_east_integrated.cfg  # TBD
+pbay -c mcmc_WASP43b_west_integrated.cfg  # TBD
 
