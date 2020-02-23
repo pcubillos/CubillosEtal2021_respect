@@ -3,7 +3,7 @@
 
 pyratbay/
 repack/
-run01/*.dat
+run*/*.dat
 code/filter_info.txt
 *.trans
 *.par
