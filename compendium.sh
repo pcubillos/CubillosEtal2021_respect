@@ -56,20 +56,21 @@ repack repack_CH4.cfg  # TBD
 cd $topdir/run01/
 pbay -c tli_Li_CO.cfg
 pbay -c tli_hitemp_CO2.cfg
-pbay -c tli_exomol_H2O.cfg  # TBD
-pbay -c tli_exomol_CH4.cfg  # TBD
+pbay -c tli_exomol_H2O.cfg
+pbay -c tli_exomol_CH4.cfg
 
 
 # Make atmospheric files:
 cd $topdir/run01/
 pbay -c atm_uniform.cfg
-pbay -c atm_equilibrium.cfg
+pbay -c atm_vp_gcm.cfg
 
 # Make opacity files:
 cd $topdir/run01/
-pbay -c opacity_H2O_1.0-5.5um.cfg  # TBD
-pbay -c opacity_CH4_1.0-5.5um.cfg  # TBD
-pbay -c opacity_CO_1.0-5.5um.cfg   # TBD
+pbay -c opacity_H2O_0.6-12.0um_R10000.cfg
+pbay -c opacity_CH4_0.6-12.0um_R10000.cfg
+pbay -c opacity_CO_0.6-12.0um_R10000.cfg
+pbay -c opacity_CO2_0.6-12.0um_R10000.cfg
 
 # Run retrieval:
 cd $topdir/run02_resolved/
