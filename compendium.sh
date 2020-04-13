@@ -69,6 +69,14 @@ cd $topdir/run_integrated/
 #pbay -c mcmc_WASP43b_east_integrated.cfg
 #pbay -c mcmc_WASP43b_west_integrated.cfg
 
+# Model WASP-43b phase curve:
+cd $topdir/code/run_simulation
+python ../code/model_WASP43b.py
+python ../code/make_filters.py
+python ../code/fig_WASP43b_model_atmosphere.py
+python ../code/fig_WASP43b_model_spectra.py
+
+# Retrieve model WASP-43b spectra:
 cd $topdir/run_resolved_sim
 pbay -c mcmc_model_WASP43b_hot_resolved.cfg
 pbay -c mcmc_model_WASP43b_day_resolved.cfg
@@ -82,5 +90,6 @@ pbay -c mcmc_model_WASP43b_day_integrated.cfg
 pbay -c mcmc_model_WASP43b_east_integrated.cfg
 pbay -c mcmc_model_WASP43b_west_integrated.cfg
 pbay -c mcmc_model_WASP43b_night_integrated.cfg
+
 
 
