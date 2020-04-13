@@ -2,7 +2,7 @@
 *.swp
 
 pyratbay/
-repack/
+rate/
 run*/*.dat
 code/filter_info.txt
 *.trans
@@ -15,6 +15,8 @@ code/filter_info.txt
 *.pck
 *.png
 *.npz
+*.p
+*.pkl
 inputs/opacity/*
 !inputs/opacity/wget*
 

@@ -2,8 +2,10 @@
 topdir=`pwd`
 
 # Installs:
-pip install pyratbay==0.9.0a3
 pip install mc3==3.0.0
+pip install pyratbay==0.9.0a3
+pip install pandexo.engine==1.4
+
 cd $topdir
 git clone https://github.com/pcubillos/rate
 
@@ -63,7 +65,22 @@ pbay -c mcmc_WASP43b_east_resolved.cfg
 pbay -c mcmc_WASP43b_west_resolved.cfg
 
 cd $topdir/run_integrated/
-pbay -c mcmc_WASP43b_day_integrated.cfg
-pbay -c mcmc_WASP43b_east_integrated.cfg
-pbay -c mcmc_WASP43b_west_integrated.cfg
+#pbay -c mcmc_WASP43b_day_integrated.cfg
+#pbay -c mcmc_WASP43b_east_integrated.cfg
+#pbay -c mcmc_WASP43b_west_integrated.cfg
+
+cd $topdir/run_resolved_sim
+pbay -c mcmc_model_WASP43b_hot_resolved.cfg
+pbay -c mcmc_model_WASP43b_day_resolved.cfg
+pbay -c mcmc_model_WASP43b_east_resolved.cfg
+pbay -c mcmc_model_WASP43b_west_resolved.cfg
+pbay -c mcmc_model_WASP43b_night_resolved.cfg
+
+cd $topdir/run_integrated_sim
+pbay -c mcmc_model_WASP43b_hot_integrated.cfg
+pbay -c mcmc_model_WASP43b_day_integrated.cfg
+pbay -c mcmc_model_WASP43b_east_integrated.cfg
+pbay -c mcmc_model_WASP43b_west_integrated.cfg
+pbay -c mcmc_model_WASP43b_night_integrated.cfg
+
 
