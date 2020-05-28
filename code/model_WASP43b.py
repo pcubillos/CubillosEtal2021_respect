@@ -1,4 +1,3 @@
-# /home/pcubillos/ast/compendia/CubillosEtal2020_SpatialRetrieval/run05_simulation
 
 import sys
 import warnings
@@ -128,12 +127,13 @@ for ilon in range(nlon):
     for ilat in range(nlat//2):
         temp = temps[ilon,ilat]
 
-        status = pb._ra.reloadatm(pyrat, temp, q2, None)
+        status = pb._ra.update_atm(pyrat, temp, q2, None)
         pb._cs.interpolate(pyrat)
         pb._ray.absorption(pyrat)
         pb._al.absorption(pyrat)
         pb._od.opticaldepth(pyrat)
-        bb.Bwn2D(pyrat.spec.wn, pyrat.atm.temp, pyrat.od.B, pyrat.od.ideep)
+        bb.blackbody_wn_2D(
+            pyrat.spec.wn, pyrat.atm.temp, pyrat.od.B, pyrat.od.ideep)
         intensity = t.intensity(
             pyrat.od.depth, pyrat.od.ideep, pyrat.od.B,
             mu[iphase,ilon,ilat], pyrat.atm.rtop)
@@ -195,43 +195,45 @@ resolution = 100.0
 noise = [20.0, 30.0]
 
 pyrat.ncpu = 5  # 24 was breaking pandexo/pandeia
-pandexo_wl = []
-pandexo_flux = []
-pandexo_uncert = []
-for iphase in range(nphase):
-    print(f'\nThis is phase {iphase+1}/{nphase}:')
-    pyrat.spec.spectrum = flux[iphase]
-    pflux, puncert, pwl = [], [], []
-    for instrument, noise_floor in zip(instruments, noise):
-        save_file = f'pandexo_WASP43b_phase{obs_phase[iphase]:.2f}_{"-".join(instrument.split())}.p'
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            pandexo_sim = io.export_pandexo(
-                pyrat, baseline, transit_duration,
-                Kmag=Kmag, metal=metal, instrument=instrument, n_transits=1,
-                resolution=resolution, noise_floor=noise_floor,
-                save_file=save_file)
-        pwl.append(pandexo_sim[1][0])
-        pflux.append(pandexo_sim[2][0])
-        puncert.append(pandexo_sim[3][0])
-    pandexo_wl    .append(pwl)
-    pandexo_flux  .append(pflux)
-    pandexo_uncert.append(puncert)
+for k in range(3):
+    pandexo_wl = []
+    pandexo_flux = []
+    pandexo_uncert = []
+    for iphase in range(8, nphase):
+        print(f'\nThis is phase {iphase+1}/{nphase}:')
+        pyrat.spec.spectrum = flux[iphase]
+        pflux, puncert, pwl = [], [], []
+        for instrument, noise_floor in zip(instruments, noise):
+            save_file = f'pandexo_WASP43b_phase{obs_phase[iphase]:.2f}_{"-".join(instrument.split())}.p'
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                pandexo_sim = io.export_pandexo(
+                    pyrat, baseline, transit_duration,
+                    Kmag=Kmag, metal=metal, instrument=instrument, n_transits=1,
+                    resolution=resolution, noise_floor=noise_floor,
+                    save_file=save_file)
+            pwl.append(pandexo_sim[1][0])
+            pflux.append(pandexo_sim[2][0])
+            puncert.append(pandexo_sim[3][0])
+        pandexo_wl    .append(pwl)
+        pandexo_flux  .append(pflux)
+        pandexo_uncert.append(puncert)
 
-# All phases have same wavelength, so, keep only the first one:
-pandexo_wl = pandexo_wl[0]
+    # All phases have same wavelength, so, keep only the first one:
+    pandexo_wl = pandexo_wl[0]
 
-pwl = np.concatenate(pandexo_wl)
-pflux   = np.array([np.concatenate(pflux) for pflux in pandexo_flux])
-puncert = np.array([np.concatenate(punc) for punc in pandexo_uncert])
-np.savez('WASP43b_3D_synthetic_pandexo_flux_ratios.npz',
-    flux_ratio=flux/pyrat.spec.starflux * rprs**2,
-    wavelength=wl,
-    stellar_flux=pyrat.spec.starflux,
-    pandexo_flux_ratio=pflux,
-    pandexo_uncert=puncert,
-    pandexo_wl=pwl,
-    phase=obs_phase,
-    flux_units='erg s-1 cm-2 cm',
-    wl_units='micron')
+    pwl = np.concatenate(pandexo_wl)
+    pflux   = np.array([np.concatenate(pflux) for pflux in pandexo_flux])
+    puncert = np.array([np.concatenate(punc) for punc in pandexo_uncert])
+    np.savez(f'WASP43b_3D_synthetic_pandexo_flux_ratios_run0{k+1}.npz',
+        flux_ratio=flux/pyrat.spec.starflux * rprs**2,
+        wavelength=wl,
+        stellar_flux=pyrat.spec.starflux,
+        pandexo_flux_ratio=pflux,
+        pandexo_uncert=puncert,
+        pandexo_wl=pwl,
+        phase=obs_phase,
+        flux_units='erg s-1 cm-2 cm',
+        wl_units='micron')
+
 

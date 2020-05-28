@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 import pickle
 import numpy as np
 from itertools import islice
@@ -19,20 +17,50 @@ def parse_list(array, n, fmt='.8f'):
         s += ['  '.join(f'{val:{fmt}}' for val in values)]
     return s
 
+# Generate JWST filter files and data/uncert texts for config files:
+run_labels = [f'run{k+1:02}' for k in range(3)]
+for k in run_labels:
+    # Read the disk-integrated and spatially-resolved data:
+    with np.load(f'WASP43b_3D_synthetic_pandexo_flux_ratios_{k}.npz') as d:
+        pflux = d['pandexo_flux_ratio']
+        puncert = d['pandexo_uncert']
+        pwl = d['pandexo_wl']
+        obs_phase = d['phase']
 
+    with open(f'../inputs/data/model_WASP43b_phase_{k}.pkl', 'rb') as f:
+        d = pickle.load(f)
+    resolved_flux = d['long_flux_ratio']
+    resolved_unc = d['long_flux_uncert']
 
-# Read the disk-integrated and spatially-resolved data:
-with np.load('WASP43b_3D_synthetic_pandexo_flux_ratios.npz') as d:
-    pflux = d['pandexo_flux_ratio']
-    puncert = d['pandexo_uncert']
-    pwl = d['pandexo_wl']
-    obs_phase = d['phase']
+    # Pretty-print the data:
+    # Integrated:
+    mask = puncert[0] < 1.0
+    sim_file = open(f'retrieval_WASP43b_integrated_jwst_phase_{k}.txt', 'w')
+    for i in range(nphase):
+        data   = '    ' + '\n    '.join(
+            parse_list(pflux[i][mask]/pc.ppm, 5, '11.6f'))
+        uncert = '    ' + '\n    '.join(
+            parse_list(puncert[i][mask]/pc.ppm, 5, '11.6f'))
 
+        sim_file.write(f'\nphase = {obs_phase[i]}:\n')
+        sim_file.write(f'dunits = ppm\ndata =\n{data}')
+        sim_file.write(f'\nuncert =\n{uncert}\n')
+    sim_file.write(f'\nfilters =\n{filters}')
+    sim_file.close()
 
-with open('../inputs/data/model_WASP43b_phase.pkl', 'rb') as f:
-    d = pickle.load(f)
-resolved_flux = d['long_flux_ratio']
-resolved_unc = d['long_flux_uncert']
+    # Resolved:
+    sim_file = open(f'retrieval_WASP43b_resolved_jwst_phase_{k}.txt', 'w')
+    for i in range(nphase):
+        data   = '    ' + '\n    '.join(
+            parse_list(resolved_flux[i][mask]/pc.ppm, 5, '11.6f'))
+        uncert = '    ' + '\n    '.join(
+            parse_list(resolved_unc[i][mask]/pc.ppm, 5, '11.6f'))
+
+        sim_file.write(f'\nphase = {obs_phase[i]}:\n')
+        sim_file.write(f'dunits = ppm\ndata =\n{data}')
+        sim_file.write(f'\nuncert =\n{uncert}\n')
+    sim_file.write(f'\nfilters =\n{filters}')
+    sim_file.close()
 
 
 nphase = len(obs_phase)
@@ -50,7 +78,6 @@ bounds[npandexo-1,1] = 2*pwl[npandexo-1] - bounds[npandexo-1,0]
 
 
 # Make the filters:
-mask = puncert[0] < 1.0
 filters = ''
 for i in range(npandexo):
     wl = 0.5 * (bounds[i,1] + bounds[i,0])
@@ -63,34 +90,4 @@ for i in range(npandexo):
     pb.tools.tophat(wl, width, margin, resolution=20000.0, ffile=ffile)
     if mask[i]:
         filters += f"    {ffile}\n"
-
-
-# Pretty-print the data:
-# Integrated:
-sim_file = open('retrieval_WASP43b_integrated_jwst_phase.txt', 'w')
-for i in range(nphase):
-    data   = '    ' + '\n    '.join(
-        parse_list(pflux[i][mask]/pc.ppm, 5, '11.6f'))
-    uncert = '    ' + '\n    '.join(
-        parse_list(puncert[i][mask]/pc.ppm, 5, '11.6f'))
-
-    sim_file.write(f'\nphase = {obs_phase[i]}:\n')
-    sim_file.write(f'dunits = ppm\ndata =\n{data}')
-    sim_file.write(f'\nuncert =\n{uncert}\n')
-sim_file.write(f'\nfilters =\n{filters}')
-sim_file.close()
-
-# Resolved:
-sim_file = open('retrieval_WASP43b_resolved_jwst_phase.txt', 'w')
-for i in range(nphase):
-    data   = '    ' + '\n    '.join(
-        parse_list(resolved_flux[i][mask]/pc.ppm, 5, '11.6f'))
-    uncert = '    ' + '\n    '.join(
-        parse_list(resolved_unc[i][mask]/pc.ppm, 5, '11.6f'))
-
-    sim_file.write(f'\nphase = {obs_phase[i]}:\n')
-    sim_file.write(f'dunits = ppm\ndata =\n{data}')
-    sim_file.write(f'\nuncert =\n{uncert}\n')
-sim_file.write(f'\nfilters =\n{filters}')
-sim_file.close()
 

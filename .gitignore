@@ -1,9 +1,13 @@
 # Pyrat Bay inputs
 *.swp
+*.sh
 
 pyratbay/
 rate/
+repack/
+pandexo/
 run*/*.dat
+run_simulation/*.txt
 code/filter_info.txt
 *.trans
 *.par

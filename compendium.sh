@@ -3,12 +3,16 @@ topdir=`pwd`
 
 # Installs:
 pip install mc3==3.0.0
-pip install pyratbay==0.9.0a3
-pip install pandexo.engine==1.4
-
+pip install pyratbay==0.9.0a5
+#pip install pandexo.engine==1.4
+#pip install scipy==1.3.3
 cd $topdir
 git clone https://github.com/pcubillos/rate
 
+git clone --recursive https://github.com/natashabatalha/pandexo
+cd pandexo
+# either git checkout b9f1f06+pandeia 1.5 or edit
+python setup.py install
 
 # Generate filter files:
 cd $topdir/code
@@ -34,11 +38,11 @@ pbay -pf exomol ../inputs/opacity/1H2-16O__POKAZATEL.pf
 pbay -pf exomol ../inputs/opacity/12C-1H4__YT10to10.pf
 
 # Make TLI files:
-cd $topdir/run01/
-pbay -c tli_hitemp_CO.cfg
-pbay -c tli_hitemp_CO2.cfg
-pbay -c tli_repack-exomol_H2O.cfg
-pbay -c tli_repack-exomol_CH4.cfg
+cd $topdir/run_setup/
+pbay -c tli_CO_hitemp_li2019.cfg
+pbay -c tli_CO2_hitemp_2010.cfg
+pbay -c tli_H2O_exomol_pokazatel.cfg
+pbay -c tli_CH4_exomol_yt10to10.cfg
 
 
 # Make atmospheric files:
@@ -48,15 +52,15 @@ pbay -c atm_vp_gcm.cfg
 
 # Make opacity files:
 cd $topdir/run_setup
-pbay -c opacity_CH4_0.8-5.5um_R10000.cfg
 pbay -c opacity_H2O_0.8-5.5um_R10000.cfg
-pbay -c opacity_CO_0.8-5.5um_R10000.cfg
+pbay -c opacity_CH4_0.8-5.5um_R10000.cfg
 pbay -c opacity_CO2_0.8-5.5um_R10000.cfg
+pbay -c opacity_CO_0.8-5.5um_R10000.cfg
 
 pbay -c opacity_H2O_0.6-12.0um_R10000.cfg
 pbay -c opacity_CH4_0.6-12.0um_R10000.cfg
-pbay -c opacity_CO_0.6-12.0um_R10000.cfg
 pbay -c opacity_CO2_0.6-12.0um_R10000.cfg
+pbay -c opacity_CO_0.6-12.0um_R10000.cfg
 
 # Run retrieval:
 cd $topdir/run_resolved/
@@ -65,12 +69,13 @@ pbay -c mcmc_WASP43b_east_resolved.cfg
 pbay -c mcmc_WASP43b_west_resolved.cfg
 
 cd $topdir/run_integrated/
-#pbay -c mcmc_WASP43b_day_integrated.cfg
-#pbay -c mcmc_WASP43b_east_integrated.cfg
-#pbay -c mcmc_WASP43b_west_integrated.cfg
+pbay -c mcmc_WASP43b_day_integrated.cfg
+pbay -c mcmc_WASP43b_east_integrated.cfg
+pbay -c mcmc_WASP43b_west_integrated.cfg
+
 
 # Model WASP-43b phase curve:
-cd $topdir/code/run_simulation
+cd $topdir/run_simulation
 python ../code/model_WASP43b.py
 python ../code/make_filters.py
 python ../code/fig_WASP43b_model_atmosphere.py
