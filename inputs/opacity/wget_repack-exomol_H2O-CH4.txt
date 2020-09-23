@@ -1,0 +1,4 @@
+https://zenodo.org/record/3768504/files/pcubillos/H2O_exomol_pokazatel_0.24-500.0um_100-3500K_threshold_0.01_lbl.dat
+https://zenodo.org/record/3768504/files/pcubillos/CH4_exomol_yt10to10_0.82-500.0um_100-3000K_threshold_0.03_lbl.dat
+http://www.exomol.com/db/H2O/1H2-16O/POKAZATEL/1H2-16O__POKAZATEL.pf
+http://www.exomol.com/db/CH4/12C-1H4/YT10to10/12C-1H4__YT10to10.pf
