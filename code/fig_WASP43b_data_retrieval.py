@@ -117,29 +117,32 @@ lw = 1.0
 f0 = 1.0 / pc.ppt
 
 temp_lims = 400, 2400
-xt, yt = 0.7, 0.05
-dxt = 1.0 - xt - 0.02
+press_lims = 100, 1e-7
+xt, yt = 0.7, 0.055
+dxt = 1.0 - xt - 0.01
 dyt = 0.5 - yt - 0.04
 
-xs, ys = 0.07, 0.03
+xs, ys = 0.062, 0.03
 dxs = 0.62 - xs 
 dys = 1.0/3 - ys - 0.03
 
-rect = 0.03, 0.05, 0.62, 0.31
+rect = 0.03, yt, 0.62, 0.34
 margin = 0.01
 ranges = [(-6, -1), (-12, -1), (-12, -1), (-12, -1)]
 
-plt.figure(10, (8.5, 9))
+
+plt.figure(10, (8.5, 7.5))
 plt.clf()
-ax = plt.axes([xt, yt+0.5, dxt, dyt])
+ax = plt.axes([xt, yt+0.505, dxt, dyt])
 for tm, tl, th, col, lab in \
         zip(pt_median[3:], pt_low[3:], pt_high[3:], dcolors, labels):
     plt.plot(tm, pressure, c=col, label=lab)
     ax.fill_betweenx(pressure, tl, th, facecolor=col, alpha=0.25)
 ax.tick_params(labelsize=fs, direction='in')
+ax.tick_params(axis='both', which='minor', length=0)
 ax.set_yscale("log")
 ax.set_ylim(np.amax(pressure), np.amin(pressure))
-ax.set_ylim(100, 1e-6)
+ax.set_ylim(press_lims)
 ax.set_xlim(temp_lims)
 ax.set_xlabel("Temperature (K)", fontsize=fs)
 ax.set_ylabel("Pressure (bar)", fontsize=fs)
@@ -152,9 +155,10 @@ for tm, tl, th, col, lab in \
     plt.plot(tm, pressure, c=col, label=lab)
     ax.fill_betweenx(pressure, tl, th, facecolor=col, alpha=0.25)
 ax.tick_params(labelsize=fs, direction='in')
+ax.tick_params(axis='both', which='minor', length=0)
 ax.set_yscale("log")
 ax.set_ylim(np.amax(pressure), np.amin(pressure))
-ax.set_ylim(100, 1e-6)
+ax.set_ylim(press_lims)
 ax.set_xlim(temp_lims)
 ax.set_xlabel("Temperature (K)", fontsize=fs)
 ax.set_ylabel("Pressure (bar)", fontsize=fs)
@@ -165,7 +169,8 @@ ax.set_title('Longitudinally resolved', fontsize=fs)
 for bflux, datum, err, col in \
       zip(best_spec, data, uncert, scolors+dcolors):
     offset = 1.002 if col not in dcolors else 1.0
-    ax = plt.axes([xs, ys+2.0/3, dxs, dys])
+    ax = plt.axes([xs, ys+0.69, dxs, dys])
+    ax.tick_params(labelsize=fs, direction='in')
     ax.plot(wl, f0*gaussf(bflux/sflux*rprs**2, sigma), c=col, lw=lw)
     ax.errorbar(bandwl*offset, f0*datum, f0*err, fmt="o", c=col, zorder=100,
                  ms=4.0, mew=0.5, mec="k")
@@ -178,7 +183,8 @@ for bflux, datum, err, col in \
     ax.set_xlabel("Wavelength (um)", fontsize=fs)
     ax.set_ylabel(r"$F_{\rm p}/F_{\rm s}$ (ppt)", fontsize=fs)
     # WFC3
-    ax = plt.axes([xs, ys+1.0/3, dxs, dys])
+    ax = plt.axes([xs, ys+0.365, dxs, dys])
+    ax.tick_params(labelsize=fs, direction='in')
     ax.plot(wl, f0*gaussf(bflux/sflux*rprs**2, sigma), c=col, lw=lw)
     ax.errorbar(bandwl*offset, f0*datum, f0*err, fmt="o", c=col, zorder=100,
                  ms=4.0, mew=0.5, mec="k")
@@ -202,7 +208,8 @@ for i in range(8):
     axes[i].set_xticklabels([])
 for i in range(8,12):
     plt.setp(axes[i].xaxis.get_majorticklabels(), rotation=0)
-
+for i in [0,4]:
+    axes[i].set_xticks([-6, -4, -2])
 plt.savefig("plots/WASP43b_retrieval.pdf")
 
 

@@ -1,4 +1,4 @@
-# Wavelength (um), Band half width, Fp/Fs, Fp/Fs error
+# Wavelength (um), Band width, Fp/Fs, Fp/Fs error
 @wfc3_g141
 1.1425,  0.0350,  2.1970e-04,  5.8956e-05
 1.1775,  0.0350,  2.5335e-04,  5.0960e-05
