@@ -1,6 +1,7 @@
 # Pyrat Bay inputs
 *.swp
 *.sh
+*.pickle
 
 pyratbay/
 rate/

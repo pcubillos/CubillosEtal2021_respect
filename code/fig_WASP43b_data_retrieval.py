@@ -1,76 +1,73 @@
-import os
-
 import matplotlib
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter1d as gaussf
 import matplotlib.pyplot as plt
 plt.ion()
 
-import pyratbay as pb
 import pyratbay.atmosphere as pa
 import pyratbay.constants as pc
-import pyratbay.tools as pt
+import pyratbay.io as io
 
 import mc3
 import mc3.plots as mp
 
 
 retrievals = [
-    'run_resolved/mcmc_WASP43b_east_resolved.cfg',
-    'run_resolved/mcmc_WASP43b_day_resolved.cfg',
-    'run_resolved/mcmc_WASP43b_west_resolved.cfg',
-    'run_integrated/mcmc_WASP43b_east_integrated.cfg',
-    'run_integrated/mcmc_WASP43b_day_integrated.cfg',
-    'run_integrated/mcmc_WASP43b_west_integrated.cfg',
+    'run_resolved/MCMC_WASP43b_east_resolved.pickle',
+    'run_resolved/MCMC_WASP43b_day_resolved.pickle',
+    'run_resolved/MCMC_WASP43b_west_resolved.pickle',
+    'run_integrated/MCMC_WASP43b_east_integrated.pickle',
+    'run_integrated/MCMC_WASP43b_day_integrated.pickle',
+    'run_integrated/MCMC_WASP43b_west_integrated.pickle',
     ]
 
 
 bestp, best_spec, data, uncert = [], [], [], []
+median, low, high = [], [], []
 bestPT, pt_low, pt_high, pt_median = [], [], [], []
 posterior = []
 for cfg in retrievals:
-    with pt.cd(os.path.dirname(cfg)):
-        pyrat = pb.run(os.path.basename(cfg), init=True, no_logfile=True)
-
+    pyrat = io.load_pyrat(cfg)
+    median.append(pyrat.ret.spec_median)
+    low.append(pyrat.ret.spec_low1)
+    high.append(pyrat.ret.spec_high1)
     with np.load(pyrat.ret.mcmcfile) as mcmc:
-        post, zchain, zmask = mc3.utils.burn(mcmc)
         bestp.append(mcmc["bestp"])
         best_spec.append(pyrat.eval(mcmc["bestp"])[0])
 
     data.append(pyrat.obs.data)
     uncert.append(pyrat.obs.uncert)
-    posterior.append(post)
+    posterior.append(pyrat.ret.posterior)
     # Posterior PT profiles:
     ifree = pyrat.ret.pstep[pyrat.ret.itemp] > 0
     itemp = np.arange(np.sum(ifree))
     tpost = pa.temperature_posterior(
-        post[:,itemp], pyrat.atm.tmodel, pyrat.ret.params[pyrat.ret.itemp],
-        ifree, pyrat.atm.press)
+        pyrat.ret.posterior[:,itemp], pyrat.atm.tmodel,
+        pyrat.ret.params[pyrat.ret.itemp], ifree, pyrat.atm.press)
     pt_median.append(tpost[0])
     pt_low.append(tpost[1])
     pt_high.append(tpost[2])
 
 
-medians = [np.median(post, axis=0) for post in posterior]
+pmedians = [np.median(post, axis=0) for post in posterior]
 plows  = [np.percentile(post, 15.865, axis=0) for post in posterior]
 phighs = [np.percentile(post, 84.135, axis=0) for post in posterior]
 
-for median, plow, phigh in zip(medians, plows, phighs):
+for pmedian, plow, phigh in zip(pmedians, plows, phighs):
     print("")
-    for med,lo,hi in zip(median, plow, phigh):
-        low = med-lo
-        high = hi-med
-        print(f'${med:.1f}_{{-{low:.1f}}}^{{+{high:.1f}}}$')
+    for med,lo,hi in zip(pmedian, plow, phigh):
+        _low = med-lo
+        _high = hi-med
+        print(f'${med:.1f}_{{-{_low:.1f}}}^{{+{_high:.1f}}}$')
 
 
+swest_posteriors = posterior[0][:,3:7]
+sday_posteriors  = posterior[1][:,3:7]
+seast_posteriors = posterior[2][:,3:7]
 
-swest_posteriors = posterior[0][:,3:7] #[:,4:8]
-sday_posteriors  = posterior[1][:,3:7] #[:,4:8]
-seast_posteriors = posterior[2][:,3:7] #[:,4:8]
-
-dwest_posteriors = posterior[3][:,3:7] #[:,4:8]
-dday_posteriors  = posterior[4][:,3:7] #[:,4:8]
-deast_posteriors = posterior[5][:,3:7] #[:,4:8]
+dwest_posteriors = posterior[3][:,3:7]
+dday_posteriors  = posterior[4][:,3:7]
+deast_posteriors = posterior[5][:,3:7]
 
 
 bandwl = 1e4/pyrat.obs.bandwn
@@ -85,8 +82,10 @@ labels = [
     "Phase = 0.75 (west)",
     ]
 
-dcolors = ["mediumblue", "forestgreen", "red"]
 scolors = ["cornflowerblue", "limegreen", "darkorange"]
+scolors = ["royalblue", "limegreen", "darkorange"]
+dcolors = ["mediumblue", "forestgreen", "red"]
+ecolors = "blue green sienna navy darkgreen maroon".split()
 
 themes = [
     {'edgecolor': 'mediumblue',
@@ -131,7 +130,7 @@ margin = 0.01
 ranges = [(-6, -1), (-12, -1), (-12, -1), (-12, -1)]
 
 
-plt.figure(10, (8.5, 7.5))
+plt.figure(1, (8.5, 7.5))
 plt.clf()
 ax = plt.axes([xt, yt+0.505, dxt, dyt])
 for tm, tl, th, col, lab in \
@@ -166,29 +165,41 @@ ax.legend(loc='upper right', fontsize=fs-1)
 ax.set_title('Longitudinally resolved', fontsize=fs)
 
 # Spectra:
-for bflux, datum, err, col in \
-      zip(best_spec, data, uncert, scolors+dcolors):
-    offset = 1.002 if col not in dcolors else 1.0
+for bflux, lo, hi, datum, err, col, ecol in \
+      zip(median, low, high, data, uncert, scolors+dcolors, ecolors):
+    offset = 1.0025 if col not in dcolors else 1.0
+    alpha = 0.25 if col not in dcolors else 0.2
     ax = plt.axes([xs, ys+0.69, dxs, dys])
     ax.tick_params(labelsize=fs, direction='in')
     ax.plot(wl, f0*gaussf(bflux/sflux*rprs**2, sigma), c=col, lw=lw)
+    ax.fill_between(
+        wl, f0*gaussf(lo/sflux*rprs**2, sigma),
+            f0*gaussf(hi/sflux*rprs**2, sigma),
+        facecolor=col, edgecolor='none', alpha=alpha)
     ax.errorbar(bandwl*offset, f0*datum, f0*err, fmt="o", c=col, zorder=100,
-                 ms=4.0, mew=0.5, mec="k")
+                 ms=4.0, mew=0.5, mec="k", ecolor=ecol)
     ax.set_xscale('log')
     ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
     plt.gca().xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
     ax.set_xticks([1.1, 1.4, 1.7, 2, 2.4, 3, 4, 5])
     ax.set_xlim(1.05, 5.2)
-    ax.set_ylim(0.0, 5)
+    ax.set_ylim(0.0, 5.3)
     ax.set_xlabel("Wavelength (um)", fontsize=fs)
     ax.set_ylabel(r"$F_{\rm p}/F_{\rm s}$ (ppt)", fontsize=fs)
+    if col == scolors[0]:
+        ax.plot(wl[pyrat.obs.bandidx[-1]], pyrat.obs.bandtrans[-1]*150, '0.5')
+        ax.plot(wl[pyrat.obs.bandidx[-2]], pyrat.obs.bandtrans[-2]*150, '0.5')
     # WFC3
     ax = plt.axes([xs, ys+0.365, dxs, dys])
     ax.tick_params(labelsize=fs, direction='in')
     ax.plot(wl, f0*gaussf(bflux/sflux*rprs**2, sigma), c=col, lw=lw)
+    ax.fill_between(
+        wl, f0*gaussf(lo/sflux*rprs**2, sigma),
+            f0*gaussf(hi/sflux*rprs**2, sigma),
+        facecolor=col, edgecolor='none', alpha=alpha)
     ax.errorbar(bandwl*offset, f0*datum, f0*err, fmt="o", c=col, zorder=100,
-                 ms=4.0, mew=0.5, mec="k")
-    ax.set_xlim(1.1, 1.7)
+                 ms=4.0, mew=0.5, mec="k", ecolor=ecol)
+    ax.set_xlim(1.12, 1.66)
     ax.set_ylim(0.0, 0.9)
     ax.set_xlabel("Wavelength (um)", fontsize=fs)
     ax.set_ylabel(r"$F_{\rm p}/F_{\rm s}$ (ppt)", fontsize=fs)

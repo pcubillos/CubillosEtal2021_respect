@@ -17,7 +17,7 @@ python setup.py install
 
 # Generate filter files:
 cd $topdir/code
-#$topdir/code/make_filters.py
+$topdir/code/make_filters.py  # TBD: make sure synthetic works
 
 # Download Stellar model:
 cd $topdir/inputs
@@ -69,18 +69,23 @@ pbay -c mcmc_WASP43b_day_integrated.cfg
 pbay -c mcmc_WASP43b_east_integrated.cfg
 pbay -c mcmc_WASP43b_west_integrated.cfg
 
+# Post analysis/plot:
+cd $topdir
+python code/make_pickles.py
+python code/fig_WASP43b_data_retrieval.py
+
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Model WASP-43b phase curve:
 cd $topdir/run_simulation
 python ../code/model_WASP43b.py
 python ../code/make_filters.py
-python ../code/fig_WASP43b_model_atmosphere.py
 python ../code/fig_WASP43b_model_spectra.py
 
 # Retrieve simulated JWST WASP-43b spectra:
 cd $topdir
 sh inputs/launch_jwst_sim_resolved.sh
 sh inputs/launch_jwst_sim_integrated.sh
+python ../code/fig_WASP43b_model_retrieval.py
 
 
