@@ -54,11 +54,18 @@ newcolors[128:256] = viridis(np.linspace(0.0, 1.0, 128))
 bicolor = matplotlib.colors.ListedColormap(newcolors)
 
 
+with np.load('WASP43b_3D_temperature_madhu_model.npz') as gcm_data:
+    temps = gcm_data['temp']
+    press = gcm_data['press']/pc.bar
+    phase = gcm_data['phase']
+    obs_ilat = gcm_data['obs_ilat']
+
 with np.load('WASP43b_3D_synthetic_emission_spectra.npz') as emission_model:
     flux = emission_model['spectra']
     wl = emission_model['wavelength']
     starflux = emission_model['starflux']
     rprs = emission_model['rprs']
+    obs_phase = emission_model['obs_phase']
 
 with np.load('WASP43b_3D_synthetic_pandexo_flux_ratios.npz') as sim:
     pwl = sim['pandexo_wl']
@@ -66,12 +73,7 @@ with np.load('WASP43b_3D_synthetic_pandexo_flux_ratios.npz') as sim:
     puncert = sim['pandexo_uncert']
     obs_phase = sim['phase']
 
-with np.load('WASP43b_3D_temperature_madhu_model.npz') as gcm_data:
-    temps = gcm_data['temp']
-    press = gcm_data['press']/pc.bar
-    phase = gcm_data['phase']
-    obs_ilat = gcm_data['obs_ilat']
-
+nphase = len(obs_phase)
 
 # Composition:
 r = rate.Rate(C=2.5e-4, N=1.0e-4, O=5.0e-4, fHe=0.0851)
@@ -90,24 +92,7 @@ phase[0] -= 1
 phase[-1] += 1
 logQ = np.log(Q[:, ilon])
 
-# Abundances at lat = -60 deg
-plt.figure(5)
-plt.clf()
-ax = plt.subplot(111)
-for j,ir in enumerate(rate_spec):
-    ax.plot(phase, logQ[ir], 'o-', c=rc[j], ms=2, label=r.species[ir])
-ax.tick_params(labelsize=fs-1)
-#plt.yscale('log')
-ax.set_xlabel("Orbital Phase", fontsize=fs)
-ax.set_ylabel(r'$\log_{10}$(Volume mixing ratio)', fontsize=fs-1)
-ax.set_xlim(0, 1)
-ax.set_ylim(-25, -5)
-ax.legend(loc='upper right', fontsize=fs-2)
-plt.tight_layout()
 
-
-
-nphase = len(obs_phase)
 
 fs = 11
 bot, dy = 0.10, 0.88
@@ -259,35 +244,3 @@ ax.legend(fontsize=fs-2.5, loc=(1.03,0.5),
     handletextpad=0.5,
     )
 plt.savefig('../plots/WASP43b_disk_integrated_model_flux_ratio.pdf')
-
-
-
-# Noised data:
-sigma = 10.0
-logxticks = 1.0, 1.4, 2.0, 3.0, 4.0, 5.0
-
-col = iter('orange red limegreen blue'.split())
-mcol = iter('saddlebrown maroon darkgreen navy'.split())
-fig = plt.figure(101, (8,5))
-plt.clf()
-ax = plt.subplot(111)
-for i in [0, 4, 8, 12]:
-    flux_ratio = flux[i]/starflux * rprs**2
-    plt.plot(wl, gaussf(flux_ratio,sigma)/pc.ppm, c='0.2', zorder=-10,lw=1)
-    snr = puncert[i] < 1
-    plt.errorbar(pwl[snr], pflux[i][snr]/pc.ppm, puncert[i][snr]/pc.ppm,
-        fmt='o', ms=3.5, mew=0.0, label=f'phase={obs_phase[i]-0.006:.2f}',
-        c=next(col), mfc=next(mcol))
-plt.xlim(0.8, 5.5)
-plt.ylim(-100, 5250)
-plt.xlabel('Wavelength (um)', fontsize=fs)
-plt.ylabel(r'Disk-integrated $F_{\rm p}/F_{\rm s}$ (ppm)',
-     fontsize=fs)
-ax.tick_params(labelsize=fs-1)
-plt.xscale('log')
-plt.legend(loc='upper left', fontsize=fs-1)
-ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
-ax.set_xticks(logxticks)
-plt.tight_layout()
-plt.savefig(f'../plots/model_WASP43b_pandexo_flux_ratio.pdf')
-
