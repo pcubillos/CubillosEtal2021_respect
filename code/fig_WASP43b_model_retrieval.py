@@ -4,6 +4,8 @@ import sys
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import matplotlib.path as mpath
 from scipy.ndimage.filters import gaussian_filter1d as gaussf
 import scipy.interpolate as si
 
@@ -20,6 +22,60 @@ import pyratbay.constants as pc
 import mc3
 import mc3.plots as mp
 import mc3.utils as mu
+
+
+# An amusingly overcomplicated unnecessary legend:
+class Disk(object):
+    pass
+class Resolved(object):
+    pass
+
+class Disk_Handler(object):
+    def __init__(self):
+        self.facecolor = '0.5'
+        self.edgecolor = 'black'
+        Path = mpath.Path
+        self.path_data = [
+            (Path.MOVETO, [0.0, 0.]),
+            (Path.CURVE4, [0.2, 0.2]),
+            (Path.CURVE4, [0.3, 0.99]),
+            (Path.CURVE4, [0.43, 1.0]),
+            #(Path.LINETO, [0.6, 0.039]),
+            (Path.CURVE4, [0.5, 0.99]),
+            (Path.CURVE4, [0.65, 0.3]),
+            (Path.CURVE4, [1.0, 0.0]),
+            (Path.CLOSEPOLY, [0.0, 0.0])]
+
+    def legend_artist(self, legend, orig_handle, fontsize, handlebox):
+        x0, y0 = handlebox.xdescent, handlebox.ydescent
+        width, height = handlebox.width, handlebox.height
+        codes, verts = zip(*self.path_data)
+        xmin, ymin = np.amin(verts, axis=0)
+        xmax, ymax = np.amax(verts, axis=0)
+        verts = np.array(verts)
+        verts[:,0] = (verts[:,0]-xmin)/(xmax-xmin)*width
+        verts[:,1] = (verts[:,1]-ymin)/(ymax-ymin)*height
+        path = mpath.Path(verts, codes)
+        patch = mpatches.PathPatch(path,
+            facecolor=self.facecolor, edgecolor=self.edgecolor, lw=1.0,)
+        handlebox.add_artist(patch)
+        return patch
+
+class Resolved_Handler(Disk_Handler):
+    def __init__(self):
+        self.facecolor = 'cornflowerblue'
+        self.edgecolor = 'mediumblue'
+        Path = mpath.Path
+        self.path_data = [
+            (Path.MOVETO, [0.0, 0.]),
+            (Path.CURVE4, [0.25, 0.15]),
+            (Path.CURVE4, [0.35, 0.99]),
+            (Path.CURVE4, [0.5, 1.0]),
+
+            (Path.CURVE4, [0.65, 0.99]),
+            (Path.CURVE4, [0.75, 0.15]),
+            (Path.CURVE4, [1.0, 0.0]),
+            (Path.CLOSEPOLY, [0.0, 0.0])]
 
 
 with np.load('run_simulation/WASP43b_3D_temperature_madhu_model.npz') as gcm:
@@ -178,8 +234,10 @@ for i,k in enumerate(plot_spec):
     plt.xscale('log')
     ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
     ax.set_xticks(pyrat.inputs.logxticks)
-    if ax.get_ylim()[1] < 3.1:
+    if ax.get_ylim()[1] < 4.0:
         ax.set_ylim(ymax=3.1)
+    else:
+        ax.set_ylim(ymax=6.3)
 
 for j,i in enumerate(plot_temps):
     ax = mp.subplotter(rect, margin, j+1, ntemps//2, 2, ymargin=0.01)
@@ -295,4 +353,12 @@ for j in range(nmol):
               zorder=-2, alpha=0.6-0.35*(quantile[1,j,i]>0.7))
         axes[i].set_xlim(-1, 1)
         axes[i].set_ylim(ranges[j])
+    if j == 0:
+        axes[-1].legend(
+            [Disk(), Resolved()],
+            ['Disk integrated', 'Longitudinally resolved'],
+            handler_map={Disk: Disk_Handler(), Resolved: Resolved_Handler()},
+            loc=(-14.75, 0.805), fontsize=fs-1, framealpha=0.97,
+            borderpad=0.25, labelspacing=0.25)
 plt.savefig('plots/model_WASP43b_retrieved_abundances.pdf')
+
