@@ -49,19 +49,19 @@ newcolors[0:128] = gray(np.linspace(0.0, 0.825, 128))
 newcolors[128:256] = viridis(np.linspace(0.0, 1.0, 128))
 bicolor = matplotlib.colors.ListedColormap(newcolors)
 
-
-with np.load('WASP43b_3D_temperature_madhu_model.npz') as gcm_data:
+loc = 'inputs/data/'
+with np.load(f'{loc}WASP43b_3D_temperature_madhu_model.npz') as gcm_data:
     temps = gcm_data['temp']
     press = gcm_data['press']/pc.bar
     phase = gcm_data['phase']
     obs_ilat = gcm_data['obs_ilat']
 
-with np.load('WASP43b_3D_synthetic_emission_spectra.npz') as emission_model:
-    flux = emission_model['spectra']
-    wl = emission_model['wavelength']
-    abundances = emission_model['abundances']
+with np.load(f'{loc}WASP43b_3D_synthetic_emission_spectra.npz') as model:
+    flux = model['spectra']
+    wl = model['wavelength']
+    abundances = model['abundances']
 
-with np.load('WASP43b_3D_synthetic_pandexo_flux_ratios.npz') as sim:
+with np.load(f'{loc}WASP43b_3D_synthetic_pandexo_flux_ratios.npz') as sim:
     pwl = sim['pandexo_wl']
     pflux = sim['pandexo_flux_ratio']
     puncert = sim['pandexo_uncert']
@@ -162,5 +162,5 @@ ax.legend(
     handlelength=1.25,
     handletextpad=0.5,
     )
-plt.savefig('../plots/WASP43b_disk_integrated_model_emission.pdf')
+plt.savefig('plots/WASP43b_disk_integrated_model_emission.pdf')
 

@@ -80,7 +80,8 @@ def project(lon, lat, phase):
 # Load 3D TP model of WASP-43b:
 # Originated from WASP-34b GCM from Venot et al. (2020), but with
 # simplifiled TP profiles (Madhu TP fits to GCM)
-with np.load('WASP43b_3D_temperature_madhu_model.npz') as gcm_data:
+gcm_file = '../inputs/data/WASP43b_3D_temperature_madhu_model.npz'
+with np.load(gcm_file) as gcm_data:
     temps = gcm_data['temp']
     pressure = gcm_data['press']
     obs_ilat = gcm_data['obs_ilat']
@@ -195,7 +196,7 @@ for i, model in enumerate(models):
 
 # Save disk-integrated model emission spectra to file:
 np.savez(
-    'WASP43b_3D_synthetic_emission_spectra.npz',
+    '../inputs/data/WASP43b_3D_synthetic_emission_spectra.npz',
     wavelength=wavelength,
     spectra=spectra,
     starflux=pyrat.spec.starflux,
@@ -211,7 +212,8 @@ np.savez(
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Pandexo these monsters:
 
-with np.load('WASP43b_3D_synthetic_emission_spectra.npz') as emission_model:
+spectra_file = '../inputs/data/WASP43b_3D_synthetic_emission_spectra.npz'
+with np.load(spectra_file) as emission_model:
     wl = emission_model['wavelength']
     spectra = emission_model['spectra']
     starflux = emission_model['starflux']
@@ -332,8 +334,9 @@ for i in range(nmodels):
             local_fratio, 1e4/wl, filter_trans, filter_wn)
 
 
+flux_ratio_file = '../inputs/data/WASP43b_3D_synthetic_pandexo_flux_ratios.npz'
 np.savez(
-    'WASP43b_3D_synthetic_pandexo_flux_ratios.npz',
+    flux_ratio_file,
     flux_ratio=flux_ratio,
     wavelength=wl,
     stellar_flux=pyrat.spec.starflux,

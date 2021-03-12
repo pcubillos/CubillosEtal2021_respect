@@ -80,8 +80,10 @@ python code/fig_WASP43b_feng_retrieval.py
 # Model WASP-43b phase curve:
 cd $topdir/run_simulation
 python ../code/model_WASP43b.py
-python ../code/make_filters.py
-python ../code/fig_WASP43b_model_spectra.py
+
+cd $topdir
+python code/fig_WASP43b_model_spectra.py
+
 
 # Retrieve simulated JWST WASP-43b spectra (M1):
 # Retrieve simulated JWST WASP-43b spectra (M2):
