@@ -9,12 +9,12 @@ import mc3
 
 
 retrievals = [
-    'run_resolved/mcmc_WASP43b_east_resolved.cfg',
-    'run_resolved/mcmc_WASP43b_day_resolved.cfg',
-    'run_resolved/mcmc_WASP43b_west_resolved.cfg',
-    'run_integrated/mcmc_WASP43b_east_integrated.cfg',
-    'run_integrated/mcmc_WASP43b_day_integrated.cfg',
-    'run_integrated/mcmc_WASP43b_west_integrated.cfg',
+    'run_stevenson_mendonca/mcmc_WASP43b_integrated_phase0.25.cfg',
+    'run_stevenson_mendonca/mcmc_WASP43b_integrated_phase0.50.cfg',
+    'run_stevenson_mendonca/mcmc_WASP43b_integrated_phase0.75.cfg',
+    'run_stevenson_mendonca/mcmc_WASP43b_resolved_phase0.25.cfg',
+    'run_stevenson_mendonca/mcmc_WASP43b_resolved_phase0.50.cfg',
+    'run_stevenson_mendonca/mcmc_WASP43b_resolved_phase0.75.cfg',
     ]
 
 
@@ -28,4 +28,3 @@ for cfg in retrievals:
         pfile = pyrat.ret.mcmcfile.replace('.npz', '.pickle')
         io.save_pyrat(pyrat, pfile)
         mcmc.close()
-

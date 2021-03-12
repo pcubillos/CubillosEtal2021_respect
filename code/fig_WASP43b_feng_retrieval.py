@@ -1,4 +1,3 @@
-import os
 import sys
 from itertools import product
 
@@ -13,16 +12,11 @@ import pyratbay.atmosphere as pa
 import pyratbay.constants as pc
 import pyratbay.io as io
 import pyratbay.plots as pp
-import pyratbay.spectrum as ps
 import pyratbay.tools as pt
-
 import mc3
-import mc3.plots as mp
-import mc3.utils as mu
 
 sys.path.append('code')
-from legend_handler import *
-
+from legend_handler import Disk, Resolved, Handler
 
 
 modes = [
@@ -52,16 +46,11 @@ lo_fr     = np.zeros((nmodes, nphase, nwave))
 
 
 for j,i in product(range(nmodes), range(nphase)):
-    #model = f'mcmc_WASP43b_{modes[j]}_phase{obs_phase[i]:.2f}.cfg'
-    #with pt.cd('run_feng2020/'):
-    #    pyrat = pb.run(model, init=True, no_logfile=True)
-    #with np.load(pyrat.ret.mcmcfile) as mcmc:
-    #    posterior, zchain, zmask = mc3.utils.burn(mcmc)
-    #    bestp = mcmc['bestp']
     pickle_file = f'MCMC_WASP43b_{modes[j]}_phase{obs_phase[i]:.2f}.pickle'
-    print(pickle_file)
+    print(f'{modes[j]}: phase{obs_phase[i]:.2f}')
     with pt.cd('run_feng2020/'):
         pyrat = io.load_pyrat(pickle_file)
+
     posteriors[j,i] = pyrat.ret.posterior[:,-4:]
     rprs = pyrat.phy.rplanet/pyrat.phy.rstar
     starflux = pyrat.spec.starflux
@@ -204,8 +193,6 @@ for j,i in enumerate(plot_models):
     ax.set_ylabel('Pressure (bar)', fontsize=fs, labelpad=0.5)
     ax.set_xlim(200, 2300)
     ax.set_ylim(ymax=1e-7)
-    #ax.fill_betweenx(pyrat.atm.press/pc.bar, 200+250*contrib[i], lw=1.5,
-    #    color=cf_color, ec='forestgreen')
     if j != ny-1:
         ax.set_xticklabels([])
         ax.set_xlabel('')
@@ -215,7 +202,7 @@ for m in range(nmol):
     ax0 = mc3.plots.subplotter(rect, margin2, m+1, nx=1, ny=nmol)
     rect = ax0.get_position().extents
     axes = [
-        mp.subplotter(rect, 0.0, i+1, nx=nphase, ny=1)
+        mc3.plots.subplotter(rect, 0.0, i+1, nx=nphase, ny=1)
         for i in range(nphase)]
     ax0.set_xticks(np.array([0.06, 0.25, 0.5, 0.75, 0.94]))
     dphase = 0.0625
@@ -252,132 +239,4 @@ for m in range(nmol):
         loc=(1.25-nphase, 0.05), fontsize=fs-1, framealpha=0.8,
         borderpad=0.25, labelspacing=0.25)
 plt.savefig('plots/WASP43b_feng_spectra_temps_abundances.pdf')
-
-# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Abundances:
-
-themes = ['blue', 'green', 'red', 'orange']
-rc =   'navy darkgreen darkred darkorange'.split()
-hpdc = 'cornflowerblue limegreen red gold'.split()
-labels = 'H2O CO CO2 CH4'.split()
-ranges = [(-12.0, -1.0) for _ in molecs]
-nmol = len(labels)
-
-
-nbins = 100
-nxpdf = 100
-x    = np.zeros((nmodes, nphase, nmol, nbins))
-post = np.zeros((nmodes, nphase, nmol, nbins))
-xpdf = [np.linspace(ran[0], ran[1], nxpdf) for ran in ranges]
-fpdf = np.zeros((nmodes, nphase, nmol, nxpdf))
-
-for j,i,m in product(range(nmodes), range(nphase), range(nmol)):
-    vals, bins = np.histogram(
-        posteriors[j,i][:,m], bins=nbins, range=ranges[m], density=True)
-    vals = gaussf(vals, 1.5)
-    vals = vals/np.amax(vals) * 0.8
-    bins = 0.5 * (bins[1:] + bins[:-1])
-    PDF, Xpdf, HPDmin = mc3.stats.cred_region(
-        posteriors[j,i][:,m], quantile=0.683)
-    f = si.interp1d(
-        bins, vals, kind='nearest', bounds_error=False, fill_value=0.0)
-    x[j,i,m] = bins
-    post[j,i,m] = vals
-    fpdf[j,i,m] = f(xpdf[m])
-
-
-horizontal = True
-lw = 0.75
-fs = 10
-
-plt.figure(40, (4.5, 8.0))
-plt.clf()
-plt.subplots_adjust(0.14, 0.06, 0.99, 0.99, hspace=0.135)
-for m in range(nmol):
-    ax0 = plt.subplot(nmol, 1, m+1, zorder=-100)
-    rect = ax0.get_position().extents
-    axes = [
-        mp.subplotter(rect, 0.0, i+1, nx=nphase, ny=1)
-        for i in range(nphase)]
-    #ax0.set_xticks(np.linspace(0,1,5))
-    ax0.set_xticks(np.array([0.06, 0.25, 0.5, 0.75, 0.94]))
-    dphase = 0.0625
-    ax0.set_xlim(obs_phase[0]-dphase/2, obs_phase[-1]+dphase/2)
-    ax0.tick_params(axis='both', direction='in')
-    ax0.set_ylim(ranges[m])
-    ax0.set_ylabel(f'$\\log_{{10}}(X_{{\\rm {labels[m]} }})$')
-    if m == nmol-1:
-        ax0.set_xlabel('Orbital phase')
-    for i in range(nphase):
-        axes[i].set_xticks([])
-        axes[i].set_yticks([])
-        axes[i].set_frame_on(False)
-        axes[i].plot(-post[0,i,m], x[0,i,m], 'k', lw=lw)
-        axes[i].plot( post[1,i,m], x[1,i,m], themes[m], lw=lw)
-        axes[i].fill_betweenx(
-            xpdf[m], 0, -fpdf[0,i,m], facecolor='0.3',
-            edgecolor='none', interpolate=False, zorder=-2, alpha=0.7)
-        axes[i].fill_betweenx(
-            xpdf[m], 0, fpdf[1,i,m], facecolor=hpdc[m],
-            edgecolor='none', interpolate=False, zorder=-2, alpha=0.6)
-        axes[i].set_xlim(-1, 1)
-        axes[i].set_ylim(ranges[m])
-    if m == 0:
-        handles = [Disk(), Resolved()]
-        handle_labels = ['Disk integrated', 'Longitudinally resolved']
-        handler_map = {Disk: Handler('black'), Resolved: Handler(themes[m])}
-    else:
-        handles = [Resolved()]
-        handle_labels = ['Longitudinally resolved']
-        handler_map = {Resolved: Handler(themes[m])}
-    axes[-1].legend(
-        handles, handle_labels, handler_map=handler_map,
-        loc=(1.25-nphase, 0.05), fontsize=fs-1, framealpha=0.8,
-        borderpad=0.25, labelspacing=0.25)
-plt.savefig(f'plots/WASP43b_feng_retrieved_abundances.pdf')
-
-plt.figure(40, (8.5, 4.2))
-plt.clf()
-plt.subplots_adjust(0.07, 0.1, 0.99, 0.99, hspace=0.135, wspace=0.18)
-for m in range(nmol):
-    ax0 = plt.subplot(2, 2, m+1, zorder=-100)
-    rect = ax0.get_position().extents
-    axes = [
-        mp.subplotter(rect, 0.0, i+1, nx=nphase, ny=1)
-        for i in range(nphase)]
-    ax0.set_xticks(np.array([0.06, 0.25, 0.5, 0.75, 0.94]))
-    dphase = 0.0625
-    ax0.set_xlim(obs_phase[0]-dphase/2, obs_phase[-1]+dphase/2)
-    ax0.tick_params(axis='both', direction='in', right=True)
-    ax0.set_ylim(ranges[m])
-    ax0.set_ylabel(f'$\\log_{{10}}(X_{{\\rm {labels[m]} }})$')
-    if m >= 2:
-        ax0.set_xlabel('Orbital phase')
-    for i in range(nphase):
-        axes[i].set_xticks([])
-        axes[i].set_yticks([])
-        axes[i].set_frame_on(False)
-        axes[i].plot(-post[0,i,m], x[0,i,m], 'k', lw=lw)
-        axes[i].plot( post[1,i,m], x[1,i,m], themes[m], lw=lw)
-        axes[i].fill_betweenx(
-            xpdf[m], 0, -fpdf[0,i,m], facecolor='0.3',
-            edgecolor='none', interpolate=False, zorder=-2, alpha=0.7)
-        axes[i].fill_betweenx(
-            xpdf[m], 0, fpdf[1,i,m], facecolor=hpdc[m],
-            edgecolor='none', interpolate=False, zorder=-2, alpha=0.6)
-        axes[i].set_xlim(-1, 1)
-        axes[i].set_ylim(ranges[m])
-    if m == 0:
-        handles = [Disk(), Resolved()]
-        handle_labels = ['Disk integrated', 'Longitudinally resolved']
-        handler_map = {Disk: Handler('black'), Resolved: Handler(themes[m])}
-    else:
-        handles = [Resolved()]
-        handle_labels = ['Longitudinally resolved']
-        handler_map = {Resolved: Handler(themes[m])}
-    axes[-1].legend(
-        handles, handle_labels, handler_map=handler_map,
-        loc=(1.25-nphase, 0.05), fontsize=fs-1, framealpha=0.8,
-        borderpad=0.25, labelspacing=0.25)
-plt.savefig(f'plots/WASP43b_feng_retrieved_abundances_horizontal.pdf')
 

@@ -2,7 +2,6 @@
 topdir=`pwd`
 
 # Installs:
-pip install mc3==3.0.2
 pip install pyratbay==0.9.1
 pip install scipy==1.3.3
 
@@ -18,6 +17,7 @@ python setup.py install
 # Generate filter files:
 cd $topdir/code
 $topdir/code/make_filters.py  # TBD: make sure synthetic works
+
 
 # Download Stellar model:
 cd $topdir/inputs
@@ -58,21 +58,22 @@ pbay -c opacity_CO_0.8-5.5um_R10000.cfg
 
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Run HST+Spitzer retrieval:
-cd $topdir/run_resolved
-pbay -c mcmc_WASP43b_day_resolved.cfg
-pbay -c mcmc_WASP43b_east_resolved.cfg
-pbay -c mcmc_WASP43b_west_resolved.cfg
+# HST+Spitzer retrievals (these might take a while, you may want to
+# slice and dice at your convenience):
+cd $topdir
+sh inputs/launch_stevenson_mendonca.sh
 
-cd $topdir/run_integrated
-pbay -c mcmc_WASP43b_day_integrated.cfg
-pbay -c mcmc_WASP43b_east_integrated.cfg
-pbay -c mcmc_WASP43b_west_integrated.cfg
+cd $topdir
+sh inputs/launch_feng.sh
 
 # Post analysis/plot:
 cd $topdir
-python code/make_pickles.py
-python code/fig_WASP43b_data_retrieval.py
+python code/make_pickles_stevenson_mendonca.py
+python code/fig_WASP43b_stevenson-mendonca_retrieval.py
+
+python code/make_pickles_feng.py
+python code/fig_WASP43b_feng_retrieval.py
+
 
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -82,7 +83,8 @@ python ../code/model_WASP43b.py
 python ../code/make_filters.py
 python ../code/fig_WASP43b_model_spectra.py
 
-# Retrieve simulated JWST WASP-43b spectra:
+# Retrieve simulated JWST WASP-43b spectra (M1):
+# Retrieve simulated JWST WASP-43b spectra (M2):
 cd $topdir
 sh inputs/launch_jwst_sim_resolved.sh
 sh inputs/launch_jwst_sim_integrated.sh
