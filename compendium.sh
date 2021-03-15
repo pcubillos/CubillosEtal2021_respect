@@ -15,8 +15,8 @@ python setup.py install
 # You will need all the pandeia 1.5 business (see pandexo docs)
 
 # Generate filter files:
-cd $topdir/code
-$topdir/code/make_filters.py  # TBD: make sure synthetic works
+cd $topdir
+python code/make_filters.py
 
 
 # Download Stellar model:
@@ -89,10 +89,16 @@ python code/fig_WASP43b_model_spectra.py
 cd $topdir
 sh inputs/launch_jwst_M1.sh
 
+cd $topdir
+python code/fig_WASP43b_model_M1_retrieval.py
+
 # Retrieve simulated JWST WASP-43b spectra (M2):
 # (might take a while, slice and dice at your convenience)
 cd $topdir
 sh inputs/launch_jwst_M2_resolved.sh
 sh inputs/launch_jwst_M2_integrated.sh
-python ../code/fig_WASP43b_model_retrieval.py
+
+cd $topdir
+python code/fig_WASP43b_model_M2_retrieval.py
+python code/fig_WASP43b_model_M2_phase-curve.py
 

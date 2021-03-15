@@ -1,12 +1,9 @@
-import os
 import sys
 from itertools import product
 
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-import matplotlib.path as mpath
 from scipy.ndimage.filters import gaussian_filter1d as gaussf
 import scipy.interpolate as si
 
@@ -19,64 +16,57 @@ import pyratbay.constants as pc
 
 import mc3
 import mc3.plots as mp
-import mc3.utils as mu
 
 sys.path.append('code')
-from legend_handler import *
+from legend_handler import Disk, Resolved, Handler
 
 
-# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Temperature profile posteriors:
-models = [
+model_names = [
     'run_jwst_02TP_01Q',
     'run_jwst_09TP_01Q',
+    'run_jwst_16TP_16Q',
     ]
 
 modes = [
     'integrated',
     'resolved',
-]
+    ]
 
-with np.load('run_simulation/WASP43b_3D_synthetic_emission_spectra.npz') as emission_model:
-    #spectra = emission_model['spectra']
-    obs_phase = emission_model['obs_phase']
-    abundances = emission_model['abundances']
-    temperatures = emission_model['temperatures']
+with np.load('inputs/data/WASP43b_3D_temperature_madhu_model.npz') as d:
+    press = d['press']/pc.bar
+
+with np.load('inputs/data/WASP43b_3D_synthetic_pandexo_flux_ratios.npz') as d:
+    obs_phase = d['obs_phase']
+    abundances = d['abundances']
+    temperatures = d['temperatures']
+    local_flux_ratio = d['local_flux_ratio']
+    pandexo_wl = d['pandexo_wl']
 
 atm_models = [
     {'abund': q, 'temp': t}
     for q,t in zip(abundances, temperatures)
-]
+    ]
 
-
-with np.load('run_simulation/WASP43b_3D_synthetic_pandexo_flux_ratios.npz') as emission_model:
-    local_flux_ratio = emission_model['local_flux_ratio']
-    pandexo_wl = emission_model['pandexo_wl']
-    #spectra = emission_model['noiseless_flux_ratio']
-    #abundances = emission_model['abundances']
-    #temperatures = emission_model['temperatures']
-local_flux_ratio[0,4] = 0.5*(local_flux_ratio[0,3]+local_flux_ratio[0,5])
-
-nmodels = len(models)
+nmodels = len(model_names)
 nmodes = len(modes)
 nphase = len(obs_phase)
-obs_phase = obs_phase[0:9]
-#nmol = 4
+nlayers = len(press)
 nspec = 346
-nlayers = 61
 nprofiles = 5
-
 
 data       = np.zeros((nmodels, nmodes, nphase, nspec))
 uncerts    = np.zeros((nmodels, nmodes, nphase, nspec))
 tpost      = np.zeros((nmodels, nmodes, nphase, nprofiles, nlayers))
 posteriors = np.zeros((nmodels, nmodes, nphase), dtype=object)
 
-for k,j,i in product(range(nmodels), range(nmodes), range(nphase)):
+#for k,j,i in product(range(nmodels), range(nmodes), range(nphase)):
+k = 2
+for j,i in product(range(nmodes), range(nphase)):
     if k != 2 and i > 8:
         continue
     model = f'mcmc_model_WASP43b_{modes[j]}_phase{obs_phase[i]:.2f}.cfg'
-    with pt.cd(models[k]):
+    folder = model_names[k] if k != 2 else 'run_jwst/'  # TMP HACK
+    with pt.cd(folder):
         pyrat = pb.run(model, init=True, no_logfile=True)
     with np.load(pyrat.ret.mcmcfile) as mcmc:
         posterior, zchain, zmask = mc3.utils.burn(mcmc)
@@ -92,12 +82,10 @@ for k,j,i in product(range(nmodels), range(nmodes), range(nphase)):
         posterior[:,itemp], pyrat.atm.tmodel,
         pyrat.ret.params[pyrat.ret.itemp], ifree, pyrat.atm.press)
 
-
 band_wl = 1.0 / (pyrat.obs.bandwn * pc.um)
 wl = 1.0 / (pyrat.spec.wn * pc.um)
 
 contrib = np.zeros((nphase, nlayers))
-k = 1
 abunds = atm_models[k]['abund']
 temps  = atm_models[k]['temp']
 for i in range(nphase):
@@ -114,23 +102,21 @@ for i in range(nphase):
     bcf = np.sum(bcf, axis=1)
     contrib[i] = bcf / np.amax(bcf)
 
-labels = 'H2O CO CO2 CH4'.split()
-themes = ['blue', 'green', 'red', 'orange']
-rc =   'navy darkgreen darkred darkorange'.split()
+molecs = 'H2O CO CO2 CH4'.split()
+themes = 'blue green red orange'.split()
+rc = 'navy darkgreen darkred darkorange'.split()
 hpdc = 'cornflowerblue limegreen red gold'.split()
+nmol = len(molecs)
 
-true_q = atm_models[0]['abund'][0]
-nmol = len(labels)
-
-ranges = [(-5.5, -1.0), (-5.5, -1.0), (-12.0,-1.0), (-12.0, -1.0)]
+ranges = [(-5.5, -1.0), (-12.0, -1.0), (-12.0,-1.0), (-12.0, -1.0)]
 nbins = 100
-nxpdf = 1000
-x    = np.zeros((nmodels, nmodes, nphase, nmol, nbins))
-post = np.zeros((nmodels, nmodes, nphase, nmol, nbins))
+nxpdf = 300
+x    = np.zeros((nmodes, nphase, nmol, nbins))
+post = np.zeros((nmodes, nphase, nmol, nbins))
 xpdf = [np.linspace(ran[0], ran[1], nxpdf) for ran in ranges]
-fpdf = np.zeros((nmodels, nmodes, nphase, nmol, nxpdf))
+fpdf = np.zeros((nmodes, nphase, nmol, nxpdf))
 
-for k,j,i,m in product(range(nmodels), range(nmodes), range(nphase), range(nmol)):
+for j,i,m in product(range(nmodes), range(nphase), range(nmol)):
     if k != 2 and i > 8:
         continue
     vals, bins = np.histogram(
@@ -142,47 +128,54 @@ for k,j,i,m in product(range(nmodels), range(nmodes), range(nphase), range(nmol)
         posteriors[k,j,i][:,m], quantile=0.683)
     f = si.interp1d(
         bins, vals, kind='nearest', bounds_error=False, fill_value=0.0)
-    x[k,j,i,m] = bins
-    post[k,j,i,m] = vals
-    fpdf[k,j,i,m] = f(xpdf[m])
+    x[j,i,m] = bins
+    post[j,i,m] = vals
+    fpdf[j,i,m] = f(xpdf[m])
+
+plot_phase = np.concatenate([obs_phase-1, obs_phase, obs_phase+1])
+true_q = atm_models[k]['abund'][::4]
+plot_q = np.vstack([true_q, true_q, true_q])
 
 
+# Colors:
 acorn = pb.plots.alphatize('cornflowerblue', 0.7)
 arancia = pb.plots.alphatize('orange', 0.6)
-c_model = ['navy', 'maroon']
 c_data  = ['royalblue', 'darkorange']
 c_error = [acorn, arancia]
 col_true = 'red'
 cf_color = 'lightgreen'
 
-ttheme = 'royalblue', '0.4'
-
 fs = 10
 lw1 = 1.25
 lw2 = 0.75
-f0 = 1.0 / pc.ppt
-ms = 2.0
+ms = 1.5
+
+xmin1, xmax1 = 0.04, 0.78
+xmin2, xmax2 = 0.34, 0.995
+ymin1, ymax1 = 0.05, 0.98
+margin1 = 0.26
+margin2 = 0.35
+ymargin = 0.01
+
+plot_models = [
+    [0, 4, 6, 8],
+    [0, 4, 6, 8],
+    [0, 1, 3, 5, 7, 8, 10, 12, 13, 15],
+    ]
+
+npanels = len(plot_models[k])
+nx = 2
+ny = npanels//nx
 
 
-k = 1
-model = models[k][9:]
-nphase = 9
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Spectra and temperatures:
 
-xmin1, xmax1 = 0.045, 0.385
-xmin2, xmax2 = 0.445, 0.62
-xmin3, xmax3 = 0.70, 0.99
-ymin, ymax = 0.055, 0.99
-margin = 0.01
-margin2 = 0.03
-plot_models = [0, 4, 6, 8]
-ny = len(plot_models)
-
-
-plt.figure(41, (8.5, 8.0))
+fig = plt.figure(20, (8.5, 9.0))
 plt.clf()
-for j,i in enumerate(plot_models):
-    rect = [xmin1, ymin, xmax1, ymax]
-    ax = mc3.plots.subplotter(rect, margin, j+1, nx=1, ny=ny)
+for j,i in enumerate(plot_models[k]):
+    rect = [xmin1, ymin1, xmax1, ymax1]
+    ax = mc3.plots.subplotter(rect, margin1, j+1, nx, ny, ymargin)
     di_eb = ax.errorbar(
         band_wl, data[k,0,i]/pc.ppt, uncerts[k,0,i]/pc.ppt,
         lw=lw1, fmt='o', ms=ms, mew=0.0, c=c_data[0], ecolor=c_error[0],
@@ -198,8 +191,8 @@ for j,i in enumerate(plot_models):
         zorder=10, lw=lw1, label='True (local) model')
     plt.xlim(0.83, 5.2)
     if j == 0:
-        plt.legend(markerscale=2.0,
-            handles=[di_eb, lr_eb, true], loc=(0.03, 0.6), fontsize=fs-2)
+        plt.legend(markerscale=2.5,
+            handles=[di_eb, lr_eb, true], loc=(0.03, 0.57), fontsize=fs-2)
     ax.text(
         0.04, 0.98, f'phase = {obs_phase[i]:.2f}', weight='bold',
         va='top', ha='left', transform=ax.transAxes)
@@ -208,8 +201,8 @@ for j,i in enumerate(plot_models):
     plt.xscale('log')
     ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
     ax.set_xticks(pyrat.inputs.logxticks)
-    if j == ny-1:
-        plt.xlabel('Wavelength (um)', fontsize=fs)
+    if j >= npanels-2:
+        ax.set_xlabel('Wavelength (um)', fontsize=fs)
     else:
         ax.set_xticklabels([])
     ylim = ax.get_ylim()
@@ -217,12 +210,12 @@ for j,i in enumerate(plot_models):
     ax.set_yticks(yticks)
     ax.set_ylim(ylim)
 
-for j,i in enumerate(plot_models):
-    rect = [xmin2, ymin, xmax2, ymax]
-    ax = mc3.plots.subplotter(rect, margin, j+1, nx=1, ny=ny)
+for j,i in enumerate(plot_models[k]):
+    rect = [xmin2, ymin1, xmax2, ymax1]
+    ax = mc3.plots.subplotter(rect, margin2, j+1, nx, ny, ymargin)
     pp.temperature(
         pyrat.atm.press, bounds=tpost[k,0,i,1:3],
-        ax=ax, theme=ttheme, alpha=[1.0,0.6], fs=fs)
+        ax=ax, theme=[c_data[0],'0.5'], alpha=[1.0, 0.6], fs=fs)
     pp.temperature(
         pyrat.atm.press, bounds=tpost[k,1,i,1:3],
         ax=ax, theme='orange', alpha=[0.7, 0.3], fs=fs)
@@ -233,45 +226,53 @@ for j,i in enumerate(plot_models):
     ax.plot(
         atm_models[k]['temp'][4*i], pyrat.atm.press/pc.bar,
         c=col_true, lw=1.5, zorder=10)
-    ax.tick_params(labelsize=fs-1, axis='x', direction='in')
-    ax.tick_params(labelsize=fs-2, axis='y', direction='in')
-    ax.set_ylabel('Pressure (bar)', fontsize=fs, labelpad=0.5)
-    ax.set_xlim(200, 2300)
-    ax.set_ylim(ymax=1e-7)
     ax.fill_betweenx(pyrat.atm.press/pc.bar, 200+250*contrib[i], lw=1.5,
         color=cf_color, ec='forestgreen')
-    if j != ny-1:
+    ax.tick_params(direction='in')
+    ax.set_xlim(200, 2300)
+    ax.set_ylim(ymax=1e-7)
+    if j < npanels-2:
         ax.set_xticklabels([])
+    else:
+        ax.tick_params(labelsize=fs-1, axis='x', direction='in')
+    ax.set_ylabel('Pressure (bar)', fontsize=fs, labelpad=0.5)
+plt.savefig(f'plots/model_WASP43b_{model_names[k][9:13]}_retrieved_spectra_temperatures.pdf')
 
+
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Abundances:
+
+plt.figure(21, (4.5, 8.0))
+plt.clf()
+plt.subplots_adjust(0.13, 0.05, 0.99, 0.99, hspace=0.135)
 for m in range(nmol):
-    rect = [xmin3, ymin, xmax3, ymax]
-    ax0 = mc3.plots.subplotter(rect, margin2, m+1, nx=1, ny=nmol)
+    ax0 = plt.subplot(nmol, 1, m+1, zorder=-10)
     rect = ax0.get_position().extents
     axes = [
         mp.subplotter(rect, 0.0, i+1, nx=nphase, ny=1)
         for i in range(nphase)]
-    ax0.axhline(np.log10(true_q[m]), c=rc[m], lw=1.5)
+    ax0.plot(plot_phase, np.log10(plot_q[:,m]), c=rc[m], lw=1.5)
     ax0.set_xticks(np.linspace(0,1,5))
     dphase = obs_phase[1] - obs_phase[0]
     ax0.set_xlim(obs_phase[0]-dphase/2, obs_phase[nphase-1]+dphase/2)
     ax0.tick_params(axis='both', direction='in', right=True)
     ax0.set_ylim(ranges[m])
-    ax0.set_ylabel(f'$\\log_{{10}}(X_{{\\rm {labels[m]} }})$', fontsize=fs)
+    ax0.set_ylabel(f'$\\log_{{10}}(X_{{\\rm {molecs[m]} }})$', fontsize=fs)
     if m == nmol-1:
         ax0.set_xlabel('Orbital phase', fontsize=fs)
     for i in range(nphase):
         axes[i].set_xticks([])
         axes[i].set_yticks([])
         axes[i].set_frame_on(False)
-        axes[i].plot(0, np.log10(true_q[m]), 'o', ms=3, c=rc[m])
-        axes[i].plot(-post[k,0,i,m], x[k,0,i,m], 'k', lw=lw2)
-        axes[i].plot( post[k,1,i,m], x[k,1,i,m], themes[m], lw=lw2)
+        axes[i].plot(0, np.log10(true_q[i,m]), 'o', ms=4, c=rc[m])
+        axes[i].plot(-post[0,i,m], x[0,i,m], 'k', lw=lw2)
+        axes[i].plot( post[1,i,m], x[1,i,m], themes[m], lw=lw2)
         axes[i].fill_betweenx(
-            xpdf[m], 0, -fpdf[k,0,i,m], facecolor='0.3',
-            edgecolor='none', interpolate=False, zorder=-2, alpha=0.7)
+            xpdf[m], 0, -fpdf[0,i,m], facecolor='0.3', edgecolor='none',
+            interpolate=False, zorder=-2, alpha=0.7)
         axes[i].fill_betweenx(
-            xpdf[m], 0, fpdf[k,1,i,m], facecolor=hpdc[m],
-            edgecolor='none', interpolate=False, zorder=-2, alpha=0.6)
+            xpdf[m], 0, fpdf[1,i,m], facecolor=hpdc[m], edgecolor='none',
+            interpolate=False, zorder=-2, alpha=0.6)
         axes[i].set_xlim(-1, 1)
         axes[i].set_ylim(ranges[m])
     if m == 0:
@@ -284,7 +285,7 @@ for m in range(nmol):
         handler_map = {Resolved: Handler(themes[m])}
     axes[-1].legend(
         handles, handle_labels, handler_map=handler_map,
-        loc=(1.25-nphase, 0.95-0.1*len(handles)), fontsize=fs-1,
+        loc=(1.25-nphase, 0.025), fontsize=fs-1,
         framealpha=0.8, borderpad=0.25, labelspacing=0.25)
+plt.savefig(f'plots/model_WASP43b_{model_names[k][9:13]}_retrieved_abundances.pdf')
 
-plt.savefig(f'plots/model_WASP43b_09TP_retrieved_spectra_temp_abundances.pdf')
