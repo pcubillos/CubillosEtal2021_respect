@@ -217,6 +217,7 @@ with np.load(spectra_file) as emission_model:
     wl = emission_model['wavelength']
     spectra = emission_model['spectra']
     starflux = emission_model['starflux']
+    phase = emission_model['phase']
     obs_phase = emission_model['obs_phase']
     rprs = float(emission_model['rprs'])
     abundances = emission_model['abundances']
@@ -332,11 +333,12 @@ for i in range(nmodels):
         local_fratio = pyrat.spec.spectrum / pyrat.spec.starflux * rprs**2
         local_flux_ratio[i,iphase] = ps.band_integrate(
             local_fratio, 1e4/wl, filter_trans, filter_wn)
+# This one is exactly at half-dayside half-nightside:
+local_flux_ratio[0,4] = 0.5*(local_flux_ratio[0,3]+local_flux_ratio[0,5])
 
 
-flux_ratio_file = '../inputs/data/WASP43b_3D_synthetic_pandexo_flux_ratios.npz'
 np.savez(
-    flux_ratio_file,
+    '../inputs/data/WASP43b_3D_synthetic_pandexo_flux_ratios.npz',
     flux_ratio=flux_ratio,
     wavelength=wl,
     stellar_flux=pyrat.spec.starflux,
@@ -345,7 +347,12 @@ np.savez(
     pandexo_wl=np.concatenate(pandexo_wl),
     noiseless_flux_ratio=noiseless_flux_ratio,
     local_flux_ratio=local_flux_ratio,
-    phase=obs_phase,
+    phase=phase,
+    obs_phase=obs_phase,
+    abundances = abundances,
+    temperatures = temperatures,
     flux_units='erg s-1 cm-2 cm',
-    wl_units='micron')
+    wl_units='micron',
+    abundance_units='volume mixing ratio',
+    )
 
