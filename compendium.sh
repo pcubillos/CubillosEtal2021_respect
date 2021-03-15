@@ -75,7 +75,6 @@ python code/make_pickles_feng.py
 python code/fig_WASP43b_feng_retrieval.py
 
 
-
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Model WASP-43b phase curve:
 cd $topdir/run_simulation
@@ -86,10 +85,14 @@ python code/fig_WASP43b_model_spectra.py
 
 
 # Retrieve simulated JWST WASP-43b spectra (M1):
-# Retrieve simulated JWST WASP-43b spectra (M2):
+# (might take a while, slice and dice at your convenience)
 cd $topdir
-sh inputs/launch_jwst_sim_resolved.sh
-sh inputs/launch_jwst_sim_integrated.sh
-python ../code/fig_WASP43b_model_retrieval.py
+sh inputs/launch_jwst_M1.sh
 
+# Retrieve simulated JWST WASP-43b spectra (M2):
+# (might take a while, slice and dice at your convenience)
+cd $topdir
+sh inputs/launch_jwst_M2_resolved.sh
+sh inputs/launch_jwst_M2_integrated.sh
+python ../code/fig_WASP43b_model_retrieval.py
 
