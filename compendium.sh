@@ -101,4 +101,3 @@ sh inputs/launch_jwst_M2_integrated.sh
 cd $topdir
 python code/fig_WASP43b_model_M2_retrieval.py
 python code/fig_WASP43b_model_M2_phase-curve.py
-
