@@ -54,7 +54,6 @@ with np.load(f'{loc}WASP43b_3D_temperature_madhu_model.npz') as gcm_data:
     temps = gcm_data['temp']
     press = gcm_data['press']/pc.bar
     phase = gcm_data['phase']
-    obs_ilat = gcm_data['obs_ilat']
 
 with np.load(f'{loc}WASP43b_3D_synthetic_emission_spectra.npz') as model:
     flux = model['spectra']
