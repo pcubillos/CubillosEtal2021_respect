@@ -60,8 +60,8 @@ for j,i in product(range(nmodes), range(nphase)):
         posterior, zchain, zmask = mc3.utils.burn(mcmc)
 
     medians[j,i] = np.median(posterior, axis=0)
-    plows[j,i]  = np.percentile(posterior, 15.865, axis=0)
-    phighs[j,i] = np.percentile(posterior, 84.135, axis=0)
+    p_lows[j,i]  = np.percentile(posterior, 15.865, axis=0)
+    p_highs[j,i] = np.percentile(posterior, 84.135, axis=0)
 
     posteriors[j,i] = posterior[:,-5:-1]
     rprs = pyrat.phy.rplanet/pyrat.phy.rstar
@@ -89,8 +89,8 @@ for k in range(npars):
     for t in range(nmodes*nphase):
         j, i = t%nmodes, t//nmodes
         med = medians[j,i,k]
-        low = med - plows[j,i,k]
-        high = phighs[j,i,k] - med
+        low = med - p_lows[j,i,k]
+        high = p_highs[j,i,k] - med
         text += f' & ${med:.{dec}f}_{{-{low:.{dec}f}}}^{{+{high:.{dec}f}}}$'
     text += ' \\\\\n'
 print(text)

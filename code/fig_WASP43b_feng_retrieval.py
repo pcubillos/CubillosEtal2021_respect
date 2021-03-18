@@ -47,7 +47,7 @@ lo_fr     = np.zeros((nmodes, nphase, nwave))
 
 for j,i in product(range(nmodes), range(nphase)):
     pickle_file = f'MCMC_WASP43b_{modes[j]}_phase{obs_phase[i]:.2f}.pickle'
-    print(f'{modes[j]}: phase{obs_phase[i]:.2f}')
+    print(f'{modes[j]}: phase {obs_phase[i]:.2f}')
     with pt.cd('run_feng2020/'):
         pyrat = io.load_pyrat(pickle_file)
 
