@@ -1,9 +1,10 @@
 # Define topdir (in your top working directory) to make your life easier:
 topdir=`pwd`
 
-# Installs:
-pip install pyratbay==0.9.1
-pip install scipy==1.3.3
+# Install the necessary code:
+# (the strong advise is to work in a new/dedicated virtual environment):
+pip install 'pyratbay==1.0.0'
+pip install 'scipy==1.3.3'
 
 cd $topdir
 git clone https://github.com/pcubillos/rate
