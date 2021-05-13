@@ -43,7 +43,7 @@ retrievals = [
 
 for cfg in retrievals:
     with pt.cd(os.path.dirname(cfg)):
-        pyrat = pb.run(os.path.basename(cfg), init=True, no_logfile=True)
+        pyrat = pb.run(os.path.basename(cfg), run_step='init', no_logfile=True)
 
         mcmc = np.load(pyrat.ret.mcmcfile)
         pyrat.ret.posterior, _, _ = mc3.utils.burn(mcmc)

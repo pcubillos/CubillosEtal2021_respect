@@ -67,7 +67,7 @@ for j,i in product(range(nmodes), range(nphase)):
         continue
     model = f'mcmc_model_WASP43b_{modes[j]}_phase{obs_phase[i]:.2f}.cfg'
     with pt.cd(model_names[k]):
-        pyrat = pb.run(model, init=True, no_logfile=True)
+        pyrat = pb.run(model, run_step='init', no_logfile=True)
     with np.load(pyrat.ret.mcmcfile) as mcmc:
         posterior, zchain, zmask = mc3.utils.burn(mcmc)
         posteriors[k,j,i] = posterior[:,-4:]

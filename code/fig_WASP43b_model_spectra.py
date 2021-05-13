@@ -59,12 +59,7 @@ with np.load(f'{loc}WASP43b_3D_synthetic_emission_spectra.npz') as model:
     flux = model['spectra']
     wl = model['wavelength']
     abundances = model['abundances']
-
-with np.load(f'{loc}WASP43b_3D_synthetic_pandexo_flux_ratios.npz') as sim:
-    pwl = sim['pandexo_wl']
-    pflux = sim['pandexo_flux_ratio']
-    puncert = sim['pandexo_uncert']
-    obs_phase = sim['phase']
+    obs_phase = model['obs_phase']
 
 nphase = len(obs_phase)
 

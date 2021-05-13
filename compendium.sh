@@ -3,7 +3,7 @@ topdir=`pwd`
 
 # Install the necessary code:
 # (the strong advise is to work in a new/dedicated virtual environment):
-pip install 'pyratbay==1.0.0'
+pip install 'pyratbay==1.0.1'
 pip install 'scipy==1.3.3'
 
 cd $topdir

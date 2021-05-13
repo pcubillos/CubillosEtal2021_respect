@@ -239,7 +239,6 @@ for j,i,m in product(range(nmodes), range(nphase), range(nmol)):
 
 
 cm = plt.cm.viridis_r
-
 lw = 0.75
 pnames = [f'$\\log_{{10}}(X_{{\\rm {pname} }})$' for pname in molecs]
 xmin = 0.49
@@ -295,7 +294,7 @@ k = 0
 i = 0
 axes, cb = mc3.plots.pairwise(
     posteriors[k,i], ranges=ranges, pnames=pnames, rect=rect2,
-    nbins=16, margin=0.008, fs=fs, palette=cm)
+    nbins=16, margin=0.008, fs=fs)
 for ax in axes[:,2]:
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=0)
 cb.ax.set_position([xmax-0.02, 0.78, 0.02, 0.2])
@@ -308,7 +307,7 @@ tcb.set_yticks([])
 i = 1
 axes, cb = mc3.plots.pairwise(
     posteriors[k,i], ranges=ranges, pnames=pnames, rect=rect3,
-    nbins=16, margin=0.007, fs=fs-0.5, palette=cm)
+    nbins=16, margin=0.007, fs=fs-0.5)
 for ax in axes[:,2]:
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=0)
 cb.ax.set_position([xmax-0.02, 0.28, 0.02, 0.2])
